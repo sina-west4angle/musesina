@@ -1,0 +1,36 @@
+# musesina 飞书智能体：Edge Function 自动部署（push-sentinel）
+#
+# 触发：supabase/functions/** 或 .deploy-sentinel 有 push。
+# 手动触发：改一下 .deploy-sentinel 再 push。
+# 验收：看 Actions run 日志，每个函数一行 `deploying <函数名>`，
+#       只认 `Deployed Functions` 成功行。代码推上去了 ≠ 部署成功。
+#
+# 需要的仓库 secrets：
+#   SUPABASE_PROJECT_REF  = ocqfhempmbxmriecijrg
+#   SUPABASE_ACCESS_TOKEN（sbp_ 开头，只放 GitHub secret）
+#
+# 注意：workflow yml 只能在 GitHub 网页 UI 里改，通过 API 改会被 403 拒绝。
+
+name: deploy-edge-functions
+
+on:
+  push:
+    paths:
+      - 'supabase/functions/**'
+      - '.deploy-sentinel'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy edge functions
+        run: supabase functions deploy --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
